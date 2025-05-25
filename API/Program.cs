@@ -101,7 +101,8 @@ using (var scope = app.Services.CreateScope())
         db.Users.AddRange(
             new User { Id = "user1", Password = "123", Role = "User", Email = "user1@test.test" },
             new User { Id = "user2", Password = "123", Role = "User", Email = "user2@test.test" },
-            new User { Id = "approver1", Password = "123", Role = "Approver", Email = "approver@test.test" }
+            new User { Id = "approver1", Password = "123", Role = "Approver", Email = "approver@test.test" },
+            new User { Id = "admin", Password = "123", Role = "Admin", Email = "admin@test.test" }
         );
 
         await db.SaveChangesAsync();

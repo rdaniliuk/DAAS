@@ -19,7 +19,7 @@ namespace API
 
 
         [HttpPost]
-        [Authorize(Roles = "User")]
+        [Authorize(Roles = "User,Admin")]
         public async Task<IActionResult> Create([FromBody] CreateAccessRequestDto dto)
         {
             if (!ModelState.IsValid)
@@ -39,7 +39,7 @@ namespace API
         }
 
         [HttpGet("pending")]
-        [Authorize(Roles = "Approver")]
+        [Authorize(Roles = "Approver,Admin")]
         public async Task<ActionResult<IEnumerable<AccessRequestDto>>> GetPending()
         {
             var pendingRequests = await _service.GetPendingAsync();
@@ -47,11 +47,19 @@ namespace API
         }
 
         [HttpPost("{id}/decision")]
-        [Authorize(Roles = "Approver")]
+        [Authorize(Roles = "Approver,Admin")]
         public async Task<ActionResult<AccessRequestDto>> Decide(Guid id, [FromBody] DecisionInput input)
         {
             var updatedRequest = await _service.DecideAsync(id, input.ApproverId, input.IsApproved, input.Comment);
             return Ok(updatedRequest);
+        }
+
+        [HttpGet("all")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<AccessRequestDto>>> GetAll()
+        {
+            var all = await _service.GetAllAsync();
+            return Ok(all);
         }
     }
 }

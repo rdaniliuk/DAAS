@@ -8,5 +8,6 @@ namespace Application.Interfaces
         Task<IEnumerable<AccessRequestDto>> GetPendingAsync();
         Task<AccessRequestDto> DecideAsync(Guid requestId, string approverId, bool approve, string comment);
         Task<AccessRequestDto> GetByIdAsync(Guid requestId);
+        Task<IEnumerable<AccessRequestDto>> GetAllAsync();
     }
 }

@@ -98,5 +98,14 @@ namespace Application.Services
 
             return _mapper.Map<AccessRequestDto>(request);
         }
+
+        public async Task<IEnumerable<AccessRequestDto>> GetAllAsync()
+        {
+            var allRequests = await _db.AccessRequests
+                .Include(r => r.Decision)
+                .ToListAsync();
+
+            return _mapper.Map<List<AccessRequestDto>>(allRequests);
+        }
     }
 }
