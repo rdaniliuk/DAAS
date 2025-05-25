@@ -1,9 +1,12 @@
 ﻿using Application.DTOs;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API
 {
+
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class AccessRequestsController : ControllerBase
@@ -16,6 +19,7 @@ namespace API
 
 
         [HttpPost]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> Create([FromBody] CreateAccessRequestDto dto)
         {
             if (!ModelState.IsValid)
@@ -35,6 +39,7 @@ namespace API
         }
 
         [HttpGet("pending")]
+        [Authorize(Roles = "Approver")]
         public async Task<ActionResult<IEnumerable<AccessRequestDto>>> GetPending()
         {
             var pendingRequests = await _service.GetPendingAsync();
@@ -42,6 +47,7 @@ namespace API
         }
 
         [HttpPost("{id}/decision")]
+        [Authorize(Roles = "Approver")]
         public async Task<ActionResult<AccessRequestDto>> Decide(Guid id, [FromBody] DecisionInput input)
         {
             var updatedRequest = await _service.DecideAsync(id, input.ApproverId, input.IsApproved, input.Comment);

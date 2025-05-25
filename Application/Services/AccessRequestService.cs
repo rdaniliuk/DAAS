@@ -11,11 +11,13 @@ namespace Application.Services
     {
         private readonly AppDbContext _db;
         private readonly IMapper _mapper;
+        private readonly IEmailQueue _emailQueue;
 
-        public AccessRequestService(AppDbContext db, IMapper mapper)
+        public AccessRequestService(AppDbContext db, IMapper mapper, IEmailQueue emailQueue)
         {
             _db = db;
             _mapper = mapper;
+            _emailQueue = emailQueue;
         }
 
         public async Task<AccessRequestDto> CreateAsync(CreateAccessRequestDto dto)
@@ -68,6 +70,19 @@ namespace Application.Services
             request.Decision = decision;
 
             await _db.SaveChangesAsync();
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == request.UserId);
+            if (user == null)
+            {
+                throw new KeyNotFoundException($"User with Id {request.UserId} not found in DB.");
+            }
+            var email = new EmailMessage
+            {
+                To = user!.Email,
+                Subject = $"Request {(approve ? "approve" : "deny")}",
+                Body = $"Request #{request.Id} was {(approve ? "approve" : "deny")}." +
+                       $"\nComment: {comment}"
+            };
+            _emailQueue.Enqueue(email);
 
             return _mapper.Map<AccessRequestDto>(request);
         }

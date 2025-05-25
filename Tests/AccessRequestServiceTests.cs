@@ -4,11 +4,14 @@ using Application.DTOs;
 using AutoMapper;
 using Infrastructure;
 using Domain;
+using Moq;
+using Application.Interfaces;
 
 public class AccessRequestServiceTests
 {
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
+    private readonly Mock<IEmailQueue> _emailQueueMock;
     private readonly AccessRequestService _service;
 
     public AccessRequestServiceTests()
@@ -18,11 +21,11 @@ public class AccessRequestServiceTests
             .Options;
 
         _dbContext = new AppDbContext(options);
-
+        _emailQueueMock = new Mock<IEmailQueue>();
         var config = new MapperConfiguration(cfg => cfg.AddProfile<Application.Mapping.MappingProfile>());
         _mapper = config.CreateMapper();
 
-        _service = new AccessRequestService(_dbContext, _mapper);
+        _service = new AccessRequestService(_dbContext, _mapper, _emailQueueMock.Object);
     }
 
     [Fact]
@@ -83,14 +86,29 @@ public class AccessRequestServiceTests
         {
             Id = Guid.NewGuid(),
             DocumentId = "doc123",
-            UserId = "uesr1",
+            UserId = "user1",
             RequestedAccess = AccessType.Read,
             Reason = "test reason",
             Status = RequestStatus.Pending
         };
 
+        var user = new User
+        {
+            Id = "user1",
+            Password = "123",
+            Role = "User",
+            Email = "user1@test.test"
+        };
+
         _dbContext.AccessRequests.Add(request);
+        _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
+
+        var savedUser = await _dbContext.Users.FindAsync(user.Id);
+        Assert.NotNull(savedUser);
+
+        var savedRequest = await _dbContext.AccessRequests.FindAsync(request.Id);
+        Assert.NotNull(savedRequest);
 
         var result = await _service.DecideAsync(request.Id, "approver1", true, "approved");
 
